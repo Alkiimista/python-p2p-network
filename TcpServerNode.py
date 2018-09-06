@@ -252,8 +252,8 @@ class NodeConnection(threading.Thread):
 
             if line != "":
                 try:
-                    obj = json.loads(line)
-                    self.callback("NODEMESSAGE", self.nodeServer, self, obj)
+                    obj = json.loads(json.loads(line))
+                    self.callback(obj['event'], self.nodeServer, self, obj)
                 except:
                     print("NodeConnection: Data could not be parsed (%s)" % line)
 
