@@ -35,7 +35,7 @@ node1.connect_with_node('localhost', 20000)
 
 #node1.terminate_flag.set()  # Stopping the thread
 
-node1.send_to_nodes({"test": "ha", "ni": "hao"})
+#node1.send_to_nodes({"test": "ha", "ni": "hao"})
 
 while True:
     time.sleep(1)
