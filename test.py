@@ -68,9 +68,28 @@ def callbackNodeEvent(event, node, other, data):
                         for n in node.nodesOut:
                             if n.port != other.port:
                                 print("Broadcasting transaction")
+                                tx.event = "TRANSACTIONOK"
                                 sendtransaction = tx.to_dict()
                                 print(json.dumps(sendtransaction))
                                 # node.send_to_node(n, json.dumps(sendtransaction))
+                                #TODO add to ledger
+                    else:
+                        for n in node.nodesOut:
+                            if n.port != other.port:
+                                print("Broadcasting transaction")
+                                tx.event = "TRANSACTIONNOTOK"
+                                sendtransaction = tx.to_dict()
+                                print(json.dumps(sendtransaction))
+                                # node.send_to_node(n, json.dumps(sendtransaction))
+                else:
+                    if event == "TRANSACTIONOK":
+                        # confirmation of correct addition to ledger
+                        print("a")
+                    else:
+                        if event == "TRANSACTIONNOTOK":
+                            #TODO remove transaction (tx.transaction) from ledger
+                            print("a")
+    #TODO blocks
 
 
 
