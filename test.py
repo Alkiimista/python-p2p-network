@@ -20,22 +20,23 @@ from jsonNode import Message
 node1 = None
 node2 = None
 
+
 def callbackNodeEvent(event, node, other, data):
-    if(event == "DISCOVERY"):
+    if event == "DISCOVERY":
         nodesarr = []
         for n in node.nodesOut:
-            if(n.port != other.port):
+            if n.port != other.port:
                 temp = jsonnode(n.host, n.port)
                 nodesarr.append(temp)
-        senddata = Message('RETURNDISCOVERY',nodesarr).to_dict()
+        senddata = Message('RETURNDISCOVERY', nodesarr).to_dict()
         print(senddata)
         dumpdata = json.dumps(senddata)
         print(dumpdata)
-        node.send_to_node(other,dumpdata)
+        node.send_to_node(other, dumpdata)
 
     else:
         if event == "RETURNDISCOVERY":
-            print("nodes recieved")
+            print("nodes received")
             temp = Message.from_dict(data)
             nodes = temp.nodes
 
@@ -61,18 +62,15 @@ def callbackNodeEvent(event, node, other, data):
 
             else:
                 if event == "TRANSACTION":
-                    # TODO put in transaction pool
                     tx = Transaction.from_dict(data)
                     if tx.transaction.to and tx.transaction.transaction_from and tx.transaction.amount:
+                        node.transaction_pool.append(hashlib.sha3_256(tx).hexdigest())
                         print(tx.transaction.transaction_from)
                         for n in node.nodesOut:
                             if n.port != other.port:
                                 print("Broadcasting transaction")
-                                sendtransaction = tx.to_dict()
-                                print(json.dumps(sendtransaction))
-                                # node.send_to_node(n, json.dumps(sendtransaction))
-
-
+                                send_transaction = tx.to_dict()
+                                node.send_to_node(n, json.dumps(send_transaction))
 
 
 node1 = Node('localhost', 10000, callbackNodeEvent)

@@ -59,6 +59,15 @@ class Node(threading.Thread):
         id.update(t.encode('ascii'))
         self.id = id.hexdigest()
 
+        # Create a transaction pool
+        self.transaction_pool = []
+
+        # Create blockchain
+        self.block_chain = []
+
+        # Create ledger
+        self.ledger = []
+
         # Start the TCP/IP server
         self.init_server()
 
