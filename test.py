@@ -10,8 +10,11 @@
 import time
 import json
 import pprint
+import hashlib
 from TcpServerNode import Node
 from jsonNode import Node as jsonnode
+from jsonTransaction import Transaction
+from jsonTransaction import TransactionClass
 from jsonNode import Message
 
 node1 = None
@@ -30,21 +33,46 @@ def callbackNodeEvent(event, node, other, data):
         print(dumpdata)
         node.send_to_node(other,dumpdata)
 
+    else:
+        if event == "RETURNDISCOVERY":
+            print("nodes recieved")
+            temp = Message.from_dict(data)
+            nodes = temp.nodes
 
-    if(event == "RETURNDISCOVERY"):
-        print("nodes recieved")
-        temp = Message.from_dict(data)
-        nodes = temp.nodes
+            for n in nodes:
+                i = 0
+                for n2 in node.nodesOut:
+                    if n.port == n2.port:
+                        i = 1
+                if i == 0:
+                    node.connect_with_node(n.ip, n.port)
+                    print("connect with %s %d" % (n.ip, n.port))
+
+        else:
+            if event == "PUSH_BLOCK":
+                # TODO implement logic
+                print("block received")
+
+                block_hash = hashlib.sha3_256(data).hexdigest()
+                if block_hash.startswith('abcd'):
+                    for blocknode in node.nodesOut:
+                        if blocknode.port != other.port:
+                            blocknode.send_to_node(other, data)
+
+            else:
+                if event == "TRANSACTION":
+                    # TODO put in transaction pool
+                    tx = Transaction.from_dict(data)
+                    if tx.transaction.to and tx.transaction.transaction_from and tx.transaction.amount:
+                        print(tx.transaction.transaction_from)
+                        for n in node.nodesOut:
+                            if n.port != other.port:
+                                print("Broadcasting transaction")
+                                sendtransaction = tx.to_dict()
+                                print(json.dumps(sendtransaction))
+                                # node.send_to_node(n, json.dumps(sendtransaction))
 
 
-        for n in nodes:
-            i = 0
-            for n2 in node.nodesOut:
-                if n.port == n2.port:
-                    i = 1
-            if i == 0:
-                node.connect_with_node(n.ip, n.port)
-                print("connect with %s %d" %(n.ip ,n.port))
 
 
 node1 = Node('localhost', 10000, callbackNodeEvent)
@@ -66,20 +94,25 @@ data['event'] = "DISCOVERY"
 senddata = json.dumps(data)
 
 node1.send_to_nodes(senddata)
-
+data = {}
 
 node4 = Node('localhost', 40000, callbackNodeEvent)
 node4.start()
 node4.connect_with_node('localhost', 10000)
 node4.send_to_nodes(senddata)
 
+new_transaction = Transaction("TRANSACTION", TransactionClass("Chris", "Max", 100))
+serialized_transaction = new_transaction.to_dict()
+dump_transaction = json.dumps(serialized_transaction)
+node4.send_to_nodes(dump_transaction)
+
 
 while (True):
     time.sleep(2)
-    #print("------------------------- node1 connected with %d" % (len(node1.nodesIn)+len(node1.nodesOut)))
-    #print("------------------------- node2 connected with %d" % (len(node2.nodesIn)+len(node2.nodesOut)))
-    #print("------------------------- node3 connected with %d" % (len(node3.nodesIn)+len(node3.nodesOut)))
-    #print("------------------------- node4 connected with %d" % (len(node4.nodesIn)+len(node4.nodesOut)))
+    # print("------------------------- node1 connected with %d" % (len(node1.nodesIn)+len(node1.nodesOut)))
+    # print("------------------------- node2 connected with %d" % (len(node2.nodesIn)+len(node2.nodesOut)))
+    # print("------------------------- node3 connected with %d" % (len(node3.nodesIn)+len(node3.nodesOut)))
+    # print("------------------------- node4 connected with %d" % (len(node4.nodesIn)+len(node4.nodesOut)))
 
 
 node1.stop()
