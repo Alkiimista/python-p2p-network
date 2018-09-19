@@ -16,6 +16,8 @@ from jsonNode import Node as jsonnode
 from jsonTransaction import Transaction
 from jsonTransaction import TransactionClass
 from jsonNode import Message
+from jsonKey import Key
+from jsonKey import KeyClass
 
 node1 = None
 node2 = None
@@ -89,6 +91,26 @@ def callbackNodeEvent(event, node, other, data):
                         if event == "TRANSACTIONNOTOK":
                             #TODO remove transaction (tx.transaction) from ledger
                             print("a")
+                        else:
+                            if event == "PUBKEY":
+                                key = Key.from_dict(data)
+                                tempKey = key.to_dict()
+
+                                # Check if the keylist is empty
+                                if not bool(node.keyList):
+                                    # node.keyList.update({"originID": tempKey.get("key").get("originID"),
+                                    #                      "publicKey": tempKey.get("key").get("publicKey")})
+                                    node.keyList.update({"key": tempKey.get("key")})
+                                else:
+
+                                    # Check if there are any existing connections
+                                    for i, j in node.keyList.items():
+                                        if(j["originID"] != tempKey.get("key").get("originID")):
+                                            # TODO fix bug where key gets overwritten
+                                             node.keyList.update({"key": tempKey.get("key")})
+                                            # node.keyList.update([(tempKey.get("key").get("originID"), tempKey.get("key").get("publicKey"))])
+
+
     #TODO blocks
 
 
@@ -125,6 +147,15 @@ serialized_transaction = new_transaction.to_dict()
 dump_transaction = json.dumps(serialized_transaction)
 node4.send_to_nodes(dump_transaction)
 
+new_key = Key("PUBKEY", KeyClass(node1.id, "Secret_Key"))
+serialized_key = new_key.to_dict()
+dump_key = json.dumps(serialized_key)
+node1.send_to_nodes(dump_key)
+new_key = Key("PUBKEY", KeyClass("2", "Secret_Key"))
+serialized_key = new_key.to_dict()
+dump_key = json.dumps(serialized_key)
+node1.send_to_nodes(dump_key)
+node1.send_to_nodes(dump_key)
 
 while (True):
     time.sleep(2)

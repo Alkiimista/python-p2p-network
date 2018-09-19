@@ -20,6 +20,8 @@ import threading
 import pprint
 import random
 import hashlib
+from Cryptodome.PublicKey import RSA
+
 
 #######################################################################################################################
 # TCPServer Class #####################################################################################################
@@ -52,6 +54,12 @@ class Node(threading.Thread):
 
         # Nodes that this nodes is connected to
         self.nodesOut = []  # Nodes that we are connected to (US)->N
+
+        # Keeps a list of connected nodes and their corresponding public keys.
+        self.keyList = {}
+
+        # Create a public and private key on startup
+        self.rsaKey = RSA.generate(2048)
 
         # Create a unique ID for each node.
         id = hashlib.md5()
