@@ -63,6 +63,9 @@ class Node(threading.Thread):
         # Create a transaction pool
         self.transaction_pool = []
 
+        # Create a transaction pool with objects (needed for miners?)
+        self.transaction_data_pool = []
+
         # Create blockchain
         self.block_chain = []
 
@@ -262,12 +265,14 @@ class NodeConnection(threading.Thread):
         self.sock.settimeout(10.0)
 
         while not self.terminate_flag.is_set(): # Check whether the thread needs to be closed
-            line = ""
+            # line = ""
             try:
                 data = self.sock.recv(4096).decode("utf-8")
-                line += data.split('\n')[0]
-                self.parse(line)
-                print(line)
+                for line in data.split('\\n'):
+                    if line != '"':
+                        if line[1] == '"':
+                            line = line[1:]
+                        self.parse(line + '"')
 
             except socket.timeout:
                 pass

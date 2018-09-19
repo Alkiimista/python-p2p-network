@@ -16,6 +16,7 @@ from jsonNode import Node as jsonnode
 from jsonTransaction import Transaction
 from jsonTransaction import TransactionClass
 from jsonNode import Message
+from jsonBlock import Block
 
 node1 = None
 node2 = None
@@ -52,27 +53,41 @@ def callbackNodeEvent(event, node, other, data):
                     print("connect with %s %d" % (n.ip, n.port))
 
         else:
-            if event == "PUSH_BLOCK":
+            if event == "BLOCK":
                 # TODO implement logic
                 print("block received")
 
-                block_hash = hashlib.sha3_256(data).hexdigest()
-                if block_hash.startswith('abcd'):
-                    for blocknode in node.nodesOut:
-                        if blocknode.port != other.port:
-                            blocknode.send_to_node(other, data)
+                block_hash = hashlib.sha3_256(json.dumps(data).encode()).hexdigest()
+                print("Received block: " + block_hash)
+                block = Block.from_dict(data)
+                if block_hash.startswith('abcde') and block not in node.block_chain:
+                    # TODO also verify the transactions in this block
+                    node.block_chain.append(block)
+                    for blocktransaction in block.transactions:
+                        if blocktransaction.to_other_transaction() in node.transaction_data_pool:
+                            node.transaction_data_pool.remove(blocktransaction.to_other_transaction())
 
+                    for n in node.nodesOut:
+                        if n.port != other.port:
+                            # print("Broadcasting block")
+                            block_to_send = block.to_dict()
+                            node.send_to_node(n, json.dumps(block_to_send))
             else:
                 if event == "TRANSACTION":
-                    tx = Transaction.from_dict(data)
-                    if tx.transaction.to and tx.transaction.transaction_from and tx.transaction.amount:
-                        # node.transaction_pool.append(hashlib.sha3_256(tx).hexdigest())
-                        print(tx.transaction.transaction_from)
-                        for n in node.nodesOut:
-                            if n.port != other.port:
-                                print("Broadcasting transaction")
-                                send_transaction = tx.to_dict()
-                                node.send_to_node(n, json.dumps(send_transaction))
+                    transaction_hash = hashlib.sha3_256(json.dumps(data).encode()).hexdigest()
+                    print("Received hash " + transaction_hash)
+                    if transaction_hash not in node.transaction_pool:
+                        tx = Transaction.from_dict(data)
+                        if tx.transaction.to and tx.transaction.transaction_from and tx.transaction.amount:
+                            node.transaction_pool.append(transaction_hash)
+                            node.transaction_data_pool.append(tx)
+                            # print(node.transaction_pool)
+                            # print(tx.transaction.transaction_from)
+                            for n in node.nodesOut:
+                                if n.port != other.port:
+                                    # print("Broadcasting transaction")
+                                    transaction_to_send = tx.to_dict()
+                                    node.send_to_node(n, json.dumps(transaction_to_send))
 
 
 node1 = Node('localhost', 10000, callbackNodeEvent)
@@ -106,9 +121,33 @@ serialized_transaction = new_transaction.to_dict()
 dump_transaction = json.dumps(serialized_transaction)
 node4.send_to_nodes(dump_transaction)
 
+new_transaction = Transaction("TRANSACTION", TransactionClass("Max", "Duc", 50))
+serialized_transaction = new_transaction.to_dict()
+dump_transaction = json.dumps(serialized_transaction)
+node4.send_to_nodes(dump_transaction)
 
+
+def send_block(node: Node):
+    block_hash = ''
+    nonce = 0
+    block_transactions = []
+    for transaction in node.transaction_data_pool:
+        block_transactions.append(transaction.transaction.to_block_transaction())
+
+    block = Block("BLOCK", nonce, '0', block_transactions)
+    while not block_hash.startswith('abcde'):
+        serialized_block = json.dumps(block.to_dict())
+        block_hash = hashlib.sha3_256(serialized_block.encode()).hexdigest()
+        block.nonce += 1
+    node.send_to_nodes(serialized_block)
+
+sent_block = False
 while (True):
     time.sleep(2)
+    if (len(node3.transaction_pool) > 1) and not sent_block:
+        send_block(node3)
+        sent_block = True
+
     # print("------------------------- node1 connected with %d" % (len(node1.nodesIn)+len(node1.nodesOut)))
     # print("------------------------- node2 connected with %d" % (len(node2.nodesIn)+len(node2.nodesOut)))
     # print("------------------------- node3 connected with %d" % (len(node3.nodesIn)+len(node3.nodesOut)))
