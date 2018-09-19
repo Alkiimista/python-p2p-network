@@ -22,6 +22,8 @@ node2 = None
 
 
 def callbackNodeEvent(event, node, other, data):
+    print(event)
+    print(data)
     if event == "DISCOVERY":
         nodesarr = []
         for n in node.nodesOut:
@@ -64,7 +66,7 @@ def callbackNodeEvent(event, node, other, data):
                 if event == "TRANSACTION":
                     tx = Transaction.from_dict(data)
                     if tx.transaction.to and tx.transaction.transaction_from and tx.transaction.amount:
-                        node.transaction_pool.append(hashlib.sha3_256(tx).hexdigest())
+                        # node.transaction_pool.append(hashlib.sha3_256(tx).hexdigest())
                         print(tx.transaction.transaction_from)
                         for n in node.nodesOut:
                             if n.port != other.port:
