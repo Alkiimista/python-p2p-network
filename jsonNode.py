@@ -27,22 +27,26 @@ def to_class(c: Type[T], x: Any) -> dict:
 class Node:
     ip: str
     port: int
+    pubKey: str
 
-    def __init__(self, ip: str, port: int) -> None:
+    def __init__(self, ip: str, port: int, pubKey: str) -> None:
         self.ip = ip
         self.port = port
+        self.pubKey = pubKey
 
     @staticmethod
     def from_dict(obj: Any) -> 'Node':
         assert isinstance(obj, dict)
         ip = from_str(obj.get("ip"))
         port = from_int(obj.get("port"))
-        return Node(ip, port)
+        pubKey = from_str(obj.get("pubKey"))
+        return Node(ip, port, pubKey)
 
     def to_dict(self) -> dict:
         result: dict = {}
         result["ip"] = from_str(self.ip)
         result["port"] = from_int(self.port)
+        result["pubKey"] = from_str(self.pubKey)
         return result
 
 

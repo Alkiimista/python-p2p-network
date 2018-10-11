@@ -31,7 +31,8 @@ def callbackNodeEvent(event, node, other, data):
         nodesarr = []
         for n in node.nodesOut:
             if n.port != other.port:
-                temp = jsonnode(n.host, n.port)
+                # temp = jsonnode(n.host, n.port)
+                temp = jsonnode(n.host, n.port, n.pubKey)
                 nodesarr.append(temp)
         senddata = Message('RETURNDISCOVERY', nodesarr).to_dict()
         print(senddata)
@@ -113,18 +114,18 @@ def callbackNodeEvent(event, node, other, data):
     #TODO blocks
 
 node1 = Node('localhost', 10000, callbackNodeEvent)
-node2 = Node('localhost', 20000, callbackNodeEvent)
+node2 = Node('192.168.1.189', 20000, callbackNodeEvent)
 node3 = Node('localhost', 30000, callbackNodeEvent)
 
 node2.start()
 node3.start()
 
-node2.connect_with_node('localhost', 30000)
+node2.connect_with_node('192.168.1.135', 10000)
 
 node1.start()
-node1.connect_with_node('localhost', 20000)
+# node1.connect_with_node('localhost', 20000)
 
-#node1.terminate_flag.set()  # Stopping the thread
+#n0ode1.terminate_flag.set()  # Stopping the thread
 
 data = {}
 data['event'] = "DISCOVERY"
@@ -135,18 +136,18 @@ data = {}
 
 node4 = Node('localhost', 40000, callbackNodeEvent)
 node4.start()
-node4.connect_with_node('localhost', 10000)
-node4.send_to_nodes(senddata)
+# node4.connect_with_node('localhost', 10000)
+# node4.send_to_nodes(senddata)
 
-new_transaction = Transaction("TRANSACTION", TransactionClass("Chris", "Max", 100))
-serialized_transaction = new_transaction.to_dict()
-dump_transaction = json.dumps(serialized_transaction)
-node4.send_to_nodes(dump_transaction)
+# new_transaction = Transaction("TRANSACTION", TransactionClass("Chris", "Max", 100))
+# serialized_transaction = new_transaction.to_dict()
+# dump_transaction = json.dumps(serialized_transaction)
+# node4.send_to_nodes(dump_transaction)
 
-new_transaction = Transaction("TRANSACTION", TransactionClass("Max", "Duc", 50))
-serialized_transaction = new_transaction.to_dict()
-dump_transaction = json.dumps(serialized_transaction)
-node4.send_to_nodes(dump_transaction)
+# new_transaction = Transaction("TRANSACTION", TransactionClass("Max", "Duc", 50))
+# serialized_transaction = new_transaction.to_dict()
+# dump_transaction = json.dumps(serialized_transaction)
+# node4.send_to_nodes(dump_transaction)
 
 
 def send_block(node: Node):
@@ -169,8 +170,8 @@ node1.send_to_nodes(dump_key)
 new_key = Key("PUBKEY", KeyClass("2", "Secret_Key"))
 serialized_key = new_key.to_dict()
 dump_key = json.dumps(serialized_key)
-node1.send_to_nodes(dump_key)
-node1.send_to_nodes(dump_key)
+# node1.send_to_nodes(dump_key)
+# node1.send_to_nodes(dump_key)
 
 
 sent_block = False
