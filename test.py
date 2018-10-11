@@ -17,6 +17,8 @@ from jsonTransaction import Transaction
 from jsonTransaction import TransactionClass
 from jsonNode import Message
 from jsonBlock import Block
+from jsonKey import Key
+from jsonKey import KeyClass
 
 node1 = None
 node2 = None
@@ -88,7 +90,27 @@ def callbackNodeEvent(event, node, other, data):
                                     # print("Broadcasting transaction")
                                     transaction_to_send = tx.to_dict()
                                     node.send_to_node(n, json.dumps(transaction_to_send))
+                else:
+                    if event == "PUBKEY":
+                        key = Key.from_dict(data)
+                        tempKey = key.to_dict()
 
+                        # Check if the keylist is empty
+                        if not bool(node.keyList):
+                            # node.keyList.update({"originID": tempKey.get("key").get("originID"),
+                            #                      "publicKey": tempKey.get("key").get("publicKey")})
+                            node.keyList.update({"key": tempKey.get("key")})
+                        else:
+
+                            # Check if there are any existing connections
+                            for i, j in node.keyList.items():
+                                if(j["originID"] != tempKey.get("key").get("originID")):
+                                    # TODO fix bug where key gets overwritten
+                                     node.keyList.update({"key": tempKey.get("key")})
+                                    # node.keyList.update([(tempKey.get("key").get("originID"), tempKey.get("key").get("publicKey"))])
+
+
+    #TODO blocks
 
 node1 = Node('localhost', 10000, callbackNodeEvent)
 node2 = Node('localhost', 20000, callbackNodeEvent)
@@ -133,6 +155,16 @@ def send_block(node: Node):
     block_transactions = []
     for transaction in node.transaction_data_pool:
         block_transactions.append(transaction.transaction.to_block_transaction())
+
+new_key = Key("PUBKEY", KeyClass(node1.id, "Secret_Key"))
+serialized_key = new_key.to_dict()
+dump_key = json.dumps(serialized_key)
+node1.send_to_nodes(dump_key)
+new_key = Key("PUBKEY", KeyClass("2", "Secret_Key"))
+serialized_key = new_key.to_dict()
+dump_key = json.dumps(serialized_key)
+node1.send_to_nodes(dump_key)
+node1.send_to_nodes(dump_key)
 
     block = Block("BLOCK", nonce, '0', block_transactions)
     while not block_hash.startswith('abcde'):
