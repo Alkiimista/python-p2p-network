@@ -61,6 +61,7 @@ class Node(threading.Thread):
 
         # Create a public and private key on startup
         self.rsaKey = RSA.generate(2048)
+        self.pubKey = self.rsaKey.publickey().export_key()
 
         # Create a unique ID for each node.
         id = hashlib.md5()
@@ -231,6 +232,7 @@ class NodeConnection(threading.Thread):
 
         self.host = clientAddress[0]
         self.port = clientAddress[1]
+
         self.nodeServer = nodeServer
         self.sock = sock
         self.clientAddress = clientAddress
