@@ -155,6 +155,12 @@ def send_block(node: Node):
     block_transactions = []
     for transaction in node.transaction_data_pool:
         block_transactions.append(transaction.transaction.to_block_transaction())
+    block = Block("BLOCK", nonce, '0', block_transactions)
+    while not block_hash.startswith('abcde'):
+        serialized_block = json.dumps(block.to_dict())
+        block_hash = hashlib.sha3_256(serialized_block.encode()).hexdigest()
+        block.nonce += 1
+    node.send_to_nodes(serialized_block)
 
 new_key = Key("PUBKEY", KeyClass(node1.id, "Secret_Key"))
 serialized_key = new_key.to_dict()
@@ -166,12 +172,6 @@ dump_key = json.dumps(serialized_key)
 node1.send_to_nodes(dump_key)
 node1.send_to_nodes(dump_key)
 
-    block = Block("BLOCK", nonce, '0', block_transactions)
-    while not block_hash.startswith('abcde'):
-        serialized_block = json.dumps(block.to_dict())
-        block_hash = hashlib.sha3_256(serialized_block.encode()).hexdigest()
-        block.nonce += 1
-    node.send_to_nodes(serialized_block)
 
 sent_block = False
 while (True):
