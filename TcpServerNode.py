@@ -13,6 +13,7 @@
 #######################################################################################################################
 
 import socket
+import struct
 import sys
 import json
 import time
@@ -66,6 +67,18 @@ class Node(threading.Thread):
         t = self.host + str(self.port) + str(random.randint(1, 99999999))
         id.update(t.encode('ascii'))
         self.id = id.hexdigest()
+
+        # Create a transaction pool
+        self.transaction_pool = []
+
+        # Create a transaction pool with objects (needed for miners?)
+        self.transaction_data_pool = []
+
+        # Create blockchain
+        self.block_chain = []
+
+        # Create ledger
+        self.ledger = []
 
         # Start the TCP/IP server
         self.init_server()
@@ -124,9 +137,10 @@ class Node(threading.Thread):
         self.delete_closed_connections()
         if n in self.nodesIn or n in self.nodesOut:
             try:
-                n.send(data)
+                # n.send("{}|{}".format(len(data),data))
+                n.send(data + '\n')
             except:
-                print("TcpServer.send2node: Error while sending data to the node");
+                print("TcpServer.send2node: Error while sending data to the node")
         else:
             print("TcpServer.send2node: Could not send the data, node is not found!")
 
@@ -164,7 +178,7 @@ class Node(threading.Thread):
     def run(self):
         while not self.terminate_flag.is_set():  # Check whether the thread needs to be closed
             try:
-                print("Wait for connection")
+                # print("Wait for connection")
                 connection, client_address = self.sock.accept()
                 thread_client = NodeConnection(self, connection, client_address, self.callback)
                 thread_client.start()
@@ -240,6 +254,14 @@ class NodeConnection(threading.Thread):
             print("NodeConnection.send: Unexpected error:", sys.exc_info()[0])
             self.terminate_flag.set()
 
+    def parse(self, line):
+        if line != "":
+            try:
+                obj = json.loads(json.loads(line))
+                self.callback(obj['event'], self.nodeServer, self, obj)
+            except:
+                print("NodeConnection: Data could not be parsed (%s)" % line)
+
     # Stop the node client. Please make sure you join the thread.
     def stop(self):
         self.terminate_flag.set()
@@ -251,9 +273,14 @@ class NodeConnection(threading.Thread):
         self.sock.settimeout(10.0)
 
         while not self.terminate_flag.is_set(): # Check whether the thread needs to be closed
-            line = ""
+            # line = ""
             try:
-                line = self.sock.recv(4096)
+                data = self.sock.recv(4096).decode("utf-8")
+                for line in data.split('\\n'):
+                    if line != '"':
+                        if line[1] == '"':
+                            line = line[1:]
+                        self.parse(line + '"')
 
             except socket.timeout:
                 pass
@@ -261,13 +288,6 @@ class NodeConnection(threading.Thread):
             except:
                 self.terminate_flag.set()
                 print("NodeConnection: Socket has been terminated (%s)" % line)
-
-            if line != "":
-                try:
-                    obj = json.loads(json.loads(line))
-                    self.callback(obj['event'], self.nodeServer, self, obj)
-                except:
-                    print("NodeConnection: Data could not be parsed (%s)" % line)
 
             time.sleep(0.01)
 

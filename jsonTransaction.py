@@ -7,6 +7,7 @@
 #     result = transaction_from_dict(json.loads(json_string))
 
 from typing import Any, TypeVar, Type, cast
+from jsonBlock import Transaction as BlockTransaction
 
 
 T = TypeVar("T")
@@ -51,6 +52,9 @@ class TransactionClass:
         result["from"] = from_str(self.transaction_from)
         result["amount"] = from_int(self.amount)
         return result
+
+    def to_block_transaction(self) -> BlockTransaction:
+        return BlockTransaction(self.to, self.transaction_from, self.amount)
 
 
 class Transaction:
